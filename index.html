@@ -4,24 +4,27 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>coffeescript console</title>
   <link rel="stylesheet" type="text/css" href="css/csc.css" />
-  <script type="text/javascript" src="javascripts/jquery.min.js"></script>
-  <script type="text/javascript" src="javascripts/coffee-script.js"></script>
-  <!--
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-  -->
+  <script type="text/javascript" src="javascripts/lib/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/lib/coffee-script.js"></script>
+  <script type="text/javascript" src="javascripts/lib/store.min.js"></script>
   <script type="text/javascript" src="javascripts/csc.js"></script>
   <script type="text/javascript">
   var usage = function() {
     var s = '# CoffeeScriptConsole\n\n';
-    s += ' * press `shift+enter` to insert new line(s)\n';
-    s += ' * press `keyup`/`keydown` to browse through history\n';
+    s += '  * press `shift+enter` to insert new line(s)\n';
+    s += '  * press `keyup`/`keydown` to browse through history\n';
+    s += '  * use `echo()` instead of `console.log()` to echo'
     return s;
   }
+
   $(window).ready(function(){
-    csc = new CoffeeScriptConsole({
+    var csc = new CoffeeScriptConsole({
       $input: $('#consoleInput'),
       $output: $('#consoleOutput'),
     });
+    window.echo = function(output) {
+      csc.echo(output);
+    };
   });
   </script>
 </head>

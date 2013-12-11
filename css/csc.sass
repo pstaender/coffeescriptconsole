@@ -27,17 +27,31 @@ body
   display: block
   margin-top: 0.5em
   overflow: hidden
-  white-space: pre
+  outline: none
 #consoleInput, .outputResult
   font-size: 20px
 .outputResult
   display: block
   padding: 1em
+  padding-bottom: 0
   position: relative
   opacity: 0
   height: 0
   transition: all 0.2s ease-out
   &.visible
     padding: 1em
+    padding-bottom: 0
     opacity: 1
     height: auto
+  &.boolean
+    color: #4eaaa7
+  &.number
+    color: #f38346
+  &.object
+    color: #666 //#105882
+  &.function
+    color: #67bf99
+  &.undefined
+    color: #d47ed1 //#bbb
+  &.array
+    color: #429db7
