@@ -1,0 +1,51 @@
+html * {
+  margin: 0;
+  padding: 0; }
+
+html, body, #main {
+  position: relative;
+  width: 100%; }
+
+body {
+  background: #f6f6f6;
+  color: #222222;
+  font-family: "Lucida";
+  font-size: 14px; }
+
+.consoleTypo, .outputResult {
+  font-family: Menlo, "Courier New", Terminal, monospace;
+  color: #999999; }
+  .consoleTypo.error, .outputResult.error {
+    color: #ffadad; }
+
+#consoleInput {
+  background: white;
+  width: 95%;
+  border: 0;
+  padding: 1em;
+  margin: 0 auto;
+  resize: none;
+  height: 1em;
+  transition: height 0.1s;
+  margin: 0 auto;
+  display: block;
+  margin-top: 0.5em;
+  overflow: hidden;
+  white-space: pre; }
+
+#consoleInput, .outputResult {
+  font-size: 20px; }
+
+.outputResult {
+  display: block;
+  padding: 1em;
+  position: relative;
+  opacity: 0;
+  height: 0;
+  transition: all 0.2s ease-out; }
+  .outputResult.visible {
+    padding: 1em;
+    opacity: 1;
+    height: auto; }
+
+/*# sourceMappingURL=csc.css.map */

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>coffeescript console</title>
+  <link rel="stylesheet" type="text/css" href="css/csc.css" />
+  <script type="text/javascript" src="javascripts/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/coffee-script.js"></script>
+  <!--
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  -->
+  <script type="text/javascript" src="javascripts/csc.js"></script>
+  <script type="text/javascript">
+  var usage = function() {
+    var s = '# CoffeeScriptConsole\n\n';
+    s += ' * press `shift+enter` to insert new line(s)\n';
+    s += ' * press `keyup`/`keydown` to browse through history\n';
+    return s;
+  }
+  $(window).ready(function(){
+    csc = new CoffeeScriptConsole({
+      $input: $('#consoleInput'),
+      $output: $('#consoleOutput'),
+    });
+  });
+  </script>
+</head>
+<body>
+  <div id="main">
+    <textarea id="consoleInput" class="consoleTypo" autofocus="autofocus">usage() # press enter</textarea>
+    <div id="consoleOutput">
+    </div>
+  </div>
+</body>
+</head>
