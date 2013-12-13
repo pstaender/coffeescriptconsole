@@ -59,6 +59,8 @@ body {
     color: #67bf99; }
   .outputResult.undefined {
     color: #d47ed1; }
+    .outputResult.undefined.evalOutput {
+      display: none; }
   .outputResult.array {
     color: #429db7; }
 

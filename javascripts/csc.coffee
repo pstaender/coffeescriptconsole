@@ -1,25 +1,61 @@
 class CoffeeScriptConsole
 
+  # options
   outputContainer: '<pre class="outputResult"></pre>'
+  echoEvalOutput: true
+  storeInput: true
+  storeOutput: true
 
   lastCommand: ->
     history[history.length] or null
-  history: []
+
+  history: null #[]
+  suggestions: null #[]
+
   _currentHistoryPosition: null
+
   addToHistory: (command) ->
     command = command?.trim()
     if command
       return if @history[@history.length-1] and @history[@history.length-1] is command
       @history.push(command)
-    store.set('CoffeeScriptConsole_history', @history) if store
+    store.set('CoffeeScriptConsole_history', @history) if store and @storeInput
+
+  historySuggestionsFor: (term) ->
+    term = String(term).trim()
+    suggestions = []
+    # shallow copy of array, reverse and add suggestions
+    history = [].concat(@history).reverse().concat(@suggestions)
+    unless term is ''
+      for command in history
+        s = String(command).trim()
+        # only add if differs from command and begin is identical
+        # and if it's not already added
+        if s isnt '' and s isnt term and s.substring(0, term.length) is term and suggestions.indexOf(s) is -1
+          suggestions.push(s)
+    suggestions
+
+  clearHistory: ->
+    @clearOutputHistory()
+    @clearInputHistory()
+
+  clearInputHistory: ->
+    @history = []
+    store.set('CoffeeScriptConsole_history', @history) if store and @storeInput
+
+  clearOutputHistory: ->
+    store.set('CoffeeScriptConsole_output', []) if store and @storeOutput
 
   _lastPrompt: ''
+  _objectIsError: (o) ->
+    # EvalError, RangeError, ReferenceErrorl SyntaxError, TypeError, URIError
+    if o and typeof o.message isnt 'undefined' then true else false
 
   _resultToString: (output) ->
     if typeof output is 'object' and output isnt null
       if output.constructor is Array
         JSON.stringify output
-      else if output.constructor is Error
+      else if @_objectIsError(output)
         output.message
       else
         JSON.stringify output, null, '  '
@@ -35,6 +71,10 @@ class CoffeeScriptConsole
   _setCursorToEnd: (e, $e) ->
     e.preventDefault()
     $e.get(0).setSelectionRange $e.val().length, $e.val().length
+
+  _setCursorToStart: (e, $e) ->
+    e.preventDefault()
+    $e.get(0).setSelectionRange $e.val().split('\n')?[0].length, $e.val().split('\n')?[0].length
 
   _insertAtCursor: ($e, myValue) ->
     myField = $e.get(0)
@@ -67,46 +107,63 @@ class CoffeeScriptConsole
       lines = $e.val().split('\n').length
     $e.css 'height', lines+'em'
 
+
+
   constructor: (options = {}) ->
     unless $?
       throw Error('jQuery is required to use CoffeeScriptConsole');
     # apply default values
     options.$input ?= $('#consoleInput')
     options.$output ?= $('#consoleOutput')
-    @history = store.get('CoffeeScriptConsole_history') or [] if store
+    @history = store.get('CoffeeScriptConsole_history') or [] if store and @storeInput
+    @suggestions = []
     # apply options on object
     for attr of options
       @[attr] = options[attr]
+    if store and @storeOutput
+      outputHistory = store.get('CoffeeScriptConsole_output') or []
+      for o in outputHistory
+        @echo o.output, o.classification, false
     @init()
 
   _keyIsTriggeredManuallay: false
 
-  echo: (output) ->
-    $output = @$output
+  echo: (output, classification, doStore) ->
+    doStore = @storeOutput if typeof doStore isnt 'boolean'
     $e = $(@outputContainer)
+    $output = @$output
+    cssClass = ''
+    if typeof classification is 'string'
+      cssClass = classification
+      # skip if we don't display output of eval
+      return $e if classification is 'evalOutput' and not @echoEvalOutput
     if typeof output is 'function'
-      if typeof output.constructor is Error
-        $e.addClass 'error'
-      else
-        $e.addClass 'function'
+      cssClass = 'function'
     else if typeof output is 'number'
-      $e.addClass 'number'
+      cssClass = 'number'
     else if typeof output is 'boolean'
-      $e.addClass 'boolean'
+      cssClass = 'boolean'
     else if typeof output is 'string'
-      $e.addClass 'string'
+      cssClass = 'string'
     else if output is undefined
-      $e.addClass 'undefined'
+      cssClass = 'undefined'
     else if typeof output is 'object'
-      if output is null
-        $e.addClass 'null'
+      if @_objectIsError(output)
+        cssClass = 'error'
+      else if output is null
+        cssClass = 'null'
       else if output?.constructor is Array
-        $e.addClass 'array'
+        cssClass = 'array'
       else
-        $e.addClass 'object'
+        cssClass = 'object'
+    if cssClass
+      $e.addClass(cssClass)
+    if store and doStore
+      history = store.get('CoffeeScriptConsole_output') or []
+      history.push output: output, classification: cssClass
+      store.set('CoffeeScriptConsole_output', history)
     outputAsString = @_resultToString(output)
     $e.text outputAsString
-    # console.log outputAsString, $output
     $output.prepend $e
     setTimeout ->
       $e.addClass 'visible'
@@ -120,22 +177,47 @@ class CoffeeScriptConsole
     # TODO: split function in many functions
     $input.on 'keyup', (e) ->
       code = $(@).val()
+      cursorPosition = $input.get(0).selectionStart
       # enter+shift or backspace
       if ( e.keyCode is 13 and e.shiftKey ) or e.keyCode is 8
         linesCount = code.split('\n').length#if code.match(/\n/g)?.length > 0 then code.match(/\n/g).length else 1
         self._adjustTextareaHeight($input)
+      # tab pressed
+      if e.keyCode is 9 and cursorPosition isnt code.length
+        self._insertAtCursor $input, '  '
+
+    suggestionFor = null
+    suggestionNr = 0
+
     $input.on 'keydown', (e) ->
       code = originalCode = $(@).val()
       cursorPosition = $input.get(0).selectionStart
       linesCount = code.split('\n').length
+
       if code.trim() isnt self._lastPrompt
         $(@).removeClass 'error'
       # tab pressed
       if e.keyCode is 9
         e.preventDefault()
-        self._insertAtCursor $input, '  '
+        if cursorPosition is code.length
+          if suggestionFor is null
+            suggestionFor = code
+          suggestions = self.historySuggestionsFor(suggestionFor)
+          $(@).val(suggestions[suggestionNr]) if suggestions[suggestionNr]
+          if suggestionNr+1 <= suggestions.length
+            suggestionNr++
+          else
+            suggestionNr = 0
+            $(@).val('')
+
+        else
+          suggestionFor = null
+          suggestionNr = 0
+      else
+        suggestionFor = null
+        suggestionNr = 0
       # up
-      else if e.keyCode is 38
+      if e.keyCode is 38
         # only browse if cursor is on first line
         return unless cursorPosition <= originalCode.split("\n")?[0]?.length
         return if self._currentHistoryPosition is 0
@@ -144,7 +226,7 @@ class CoffeeScriptConsole
         self._currentHistoryPosition--
         code = self.history[self._currentHistoryPosition]
         $(@).val(code)
-        self._setCursorToEnd(e, $(@))
+        self._setCursorToStart(e, $(@))
       # down
       else if e.keyCode is 40 and self._currentHistoryPosition >= 0
         # only browse if cursor is on last line
@@ -173,14 +255,12 @@ class CoffeeScriptConsole
           $(@).val('')
           self._currentHistoryPosition = null
           self.addToHistory(code)
-          $e = self.echo(output)
-          $e.addClass 'evalOutput'
+          $e = self.echo(output, 'evalOutput')
           return if self._resultToString(output) is ''
           self.onAfterEvaluate output, $e
         catch e
           $input.addClass 'error'
-          $e = self.echo(e)
-          $e.addClass 'evalOutput'
+          $e = self.echo(e, 'evalOutput')
           self.onCodeError e, $e
 
       if typeof code is 'string'

@@ -13,7 +13,10 @@
     var s = '# CoffeeScriptConsole\n\n';
     s += '  * press `shift+enter` to insert new line(s)\n';
     s += '  * press `keyup`/`keydown` to browse through history\n';
-    s += '  * use `echo()` instead of `console.log()` to echo'
+    s += '  * use `echo()` instead of `console.log()` to echo\n'
+    s += '  * `clearHistory()` clears console history\n'
+    s += '  * `clear()` clears screen\n'
+    s += '  * `echoEvalOutput(true|false)` echo result of executed code\n'
     return s;
   }
 
@@ -21,10 +24,34 @@
     var csc = new CoffeeScriptConsole({
       $input: $('#consoleInput'),
       $output: $('#consoleOutput'),
+      suggestions: 'usage(),clearHistory(),clearScreen(),echoEvalOutput(true),echo,clear()'.split(',')
     });
-    window.echo = function(output) {
+    window.puts = window.echo = function(output) {
       csc.echo(output);
     };
+    window.clearHistory = function() {
+      csc.clearHistory();
+    }
+    window.clear = function() {
+      window.clearScreen();
+      csc.clearOutputHistory();
+    }
+
+    window.clearScreen = function() {
+      csc.$output.html('');
+    }
+
+    window.echoEvalOutput = function(trueOrFalse) {
+      if (typeof trueOrFalse === 'boolean') {
+        csc.echoEvalOutput = trueOrFalse;
+        if (store)
+          store.set('echoEvalOutput', trueOrFalse);
+      }
+    }
+
+    if (store) {
+      window.echoEvalOutput(store.get('echoEvalOutput'));
+    }
   });
   </script>
 </head>

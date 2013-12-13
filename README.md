@@ -13,12 +13,13 @@ Ensure that jQuery is included (is required by csc) and init with `$input` and `
   });
 ```
 
-### Commands
+### Commands (for the demo)
 
   * press `enter` to evaluate code
   * press `shift+enter` to insert new line(s)
   * press `keyup`/`keydown` to browse through history
   * use `echo()` instead of `console.log()` to echo
+  * `clearHistory()` clears console history
 
 ### What's implemented so far
 
