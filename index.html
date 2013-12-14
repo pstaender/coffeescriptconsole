@@ -13,10 +13,13 @@
     var s = '# CoffeeScriptConsole\n\n';
     s += '  * press `shift+enter` to insert new line(s)\n';
     s += '  * press `keyup`/`keydown` to browse through history\n';
-    s += '  * use `echo()` instead of `console.log()` to echo\n'
-    s += '  * `clearHistory()` clears console history\n'
-    s += '  * `clear()` clears screen\n'
-    s += '  * `echoEvalOutput(true|false)` echo result of executed code\n'
+    s += '  * use `echo()` instead of `console.log()` to echo\n';
+    s += '  * `clearHistory()` clears console history\n';
+    s += '  * `clear()` clears screen\n';
+    s += '  * `echoEvalOutput(true|false)` echo result of executed code\n\n';
+    s += '## Keyboard Shortcuts\n';
+    s += '  * `cmd+k` clear output screen\n';
+    s += '  * `cmd+shift+k` toggle echo eval output';
     return s;
   }
 
@@ -52,6 +55,18 @@
     window.load = function(url, cb) {
       return $.getScript(url, cb);
     }
+
+    $(document).on('keydown', function(e) {
+      // cmd + k, clear console
+      if ((e.keyCode === 75 && e.metaKey) || (e.keyCode === 75 && e.ctrlKey)) {
+        // cmd + k + shift, toggle echo eval output
+        if (e.shiftKey) {
+          csc.echoEvalOutput = !csc.echoEvalOutput;
+        } else {
+          window.clear();
+        }
+      }
+    });
 
     if (store) {
       window.echoEvalOutput(store.get('echoEvalOutput'));
