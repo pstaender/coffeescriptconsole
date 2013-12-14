@@ -5,6 +5,24 @@ class CoffeeScriptConsole
   echoEvalOutput: true
   storeInput: true
   storeOutput: true
+  adjustInputHeightUnit: 'em' #use em
+
+  constructor: (options = {}) ->
+    unless $?
+      throw Error('jQuery is required to use CoffeeScriptConsole');
+    # apply default values
+    options.$input ?= $('#consoleInput')
+    options.$output ?= $('#consoleOutput')
+    @history = store.get('CoffeeScriptConsole_history') or [] if store and @storeInput
+    @suggestions = []
+    # apply options on object
+    for attr of options
+      @[attr] = options[attr]
+    if store and @storeOutput
+      outputHistory = store.get('CoffeeScriptConsole_output') or []
+      for o in outputHistory
+        @echo o.output, o.classification, false
+    @init()
 
   lastCommand: ->
     history[history.length] or null
@@ -105,26 +123,13 @@ class CoffeeScriptConsole
   _adjustTextareaHeight: ($e, lines = null) ->
     if lines is null
       lines = $e.val().split('\n').length
-    $e.css 'height', lines+'em'
+    if @adjustInputHeightUnit
+      $e.css 'height', (lines*1.5)+@adjustInputHeightUnit
+    else
+      $e.attr 'rows', lines
 
 
 
-  constructor: (options = {}) ->
-    unless $?
-      throw Error('jQuery is required to use CoffeeScriptConsole');
-    # apply default values
-    options.$input ?= $('#consoleInput')
-    options.$output ?= $('#consoleOutput')
-    @history = store.get('CoffeeScriptConsole_history') or [] if store and @storeInput
-    @suggestions = []
-    # apply options on object
-    for attr of options
-      @[attr] = options[attr]
-    if store and @storeOutput
-      outputHistory = store.get('CoffeeScriptConsole_output') or []
-      for o in outputHistory
-        @echo o.output, o.classification, false
-    @init()
 
   _keyIsTriggeredManuallay: false
 
@@ -133,34 +138,36 @@ class CoffeeScriptConsole
     $e = $(@outputContainer)
     $output = @$output
     cssClass = ''
-    if typeof classification is 'string'
+    if typeof classification is 'string' and classification isnt 'evalOutput'
       cssClass = classification
       # skip if we don't display output of eval
+      $e.addClass(cssClass)
+    else
       return $e if classification is 'evalOutput' and not @echoEvalOutput
-    if typeof output is 'function'
-      cssClass = 'function'
-    else if typeof output is 'number'
-      cssClass = 'number'
-    else if typeof output is 'boolean'
-      cssClass = 'boolean'
-    else if typeof output is 'string'
-      cssClass = 'string'
-    else if output is undefined
-      cssClass = 'undefined'
-    else if typeof output is 'object'
-      if @_objectIsError(output)
-        cssClass = 'error'
-      else if output is null
-        cssClass = 'null'
-      else if output?.constructor is Array
-        cssClass = 'array'
-      else
-        cssClass = 'object'
+      if typeof output is 'function'
+        cssClass = 'function'
+      else if typeof output is 'number'
+        cssClass = 'number'
+      else if typeof output is 'boolean'
+        cssClass = 'boolean'
+      else if typeof output is 'string'
+        cssClass = 'string'
+      else if output is undefined
+        cssClass = 'undefined'
+      else if typeof output is 'object'
+        if @_objectIsError(output)
+          cssClass = 'error'
+        else if output is null
+          cssClass = 'null'
+        else if output?.constructor is Array
+          cssClass = 'array'
+        else
+          cssClass = 'object'
     if cssClass
       $e.addClass(cssClass)
     if store and doStore
       history = store.get('CoffeeScriptConsole_output') or []
-      history.push output: output, classification: cssClass
+      history.push output: @_resultToString(output) , classification: cssClass
       store.set('CoffeeScriptConsole_output', history)
     outputAsString = @_resultToString(output)
     $e.text outputAsString
@@ -179,9 +186,10 @@ class CoffeeScriptConsole
       code = $(@).val()
       cursorPosition = $input.get(0).selectionStart
       # enter+shift or backspace
-      if ( e.keyCode is 13 and e.shiftKey ) or e.keyCode is 8
-        linesCount = code.split('\n').length#if code.match(/\n/g)?.length > 0 then code.match(/\n/g).length else 1
-        self._adjustTextareaHeight($input)
+      # if ( e.keyCode is 13 and e.shiftKey ) or e.keyCode is 8
+      # always check lines
+      linesCount = code.split('\n').length#if code.match(/\n/g)?.length > 0 then code.match(/\n/g).length else 1
+      self._adjustTextareaHeight($input)
       # tab pressed
       if e.keyCode is 9 and cursorPosition isnt code.length
         self._insertAtCursor $input, '  '
@@ -247,25 +255,27 @@ class CoffeeScriptConsole
       # enter pressed
       else if e.keyCode is 13 and not e.shiftKey#ctrlKey
         e.preventDefault()
-        # execute code
-        try
-          # output = CoffeeScript.eval code, sandbox: @
-          js = CoffeeScript.compile code, bare: true
-          output = eval.call window, js
-          $(@).val('')
-          self._currentHistoryPosition = null
-          self.addToHistory(code)
-          $e = self.echo(output, 'evalOutput')
-          return if self._resultToString(output) is ''
-          self.onAfterEvaluate output, $e
-        catch e
-          $input.addClass 'error'
-          $e = self.echo(e, 'evalOutput')
-          self.onCodeError e, $e
-
+        self.executeCode()
       if typeof code is 'string'
         self._lastPrompt = code.trim()
       self._adjustTextareaHeight($(@))
+
+  executeCode: (code = @$input?.val(), $input = @$input) ->
+    # execute code
+    try
+      # output = CoffeeScript.eval code, sandbox: @
+      js = CoffeeScript.compile code, bare: true
+      output = eval.call window, js
+      $input.val('')
+      @_currentHistoryPosition = null
+      @addToHistory(code)
+      $e = @echo(output, 'evalOutput')
+      return if @_resultToString(output) is ''
+      @onAfterEvaluate output, $e
+    catch e
+      $input.addClass 'error'
+      $e = @echo(e, 'evalOutput')
+      @onCodeError e, $e
 
   onAfterEvaluate: (output, $e) ->
 

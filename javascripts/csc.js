@@ -10,6 +10,39 @@ CoffeeScriptConsole = (function() {
 
   CoffeeScriptConsole.prototype.storeOutput = true;
 
+  CoffeeScriptConsole.prototype.adjustInputHeightUnit = 'em';
+
+  function CoffeeScriptConsole(options) {
+    var attr, o, outputHistory, _i, _len;
+    if (options == null) {
+      options = {};
+    }
+    if (typeof $ === "undefined" || $ === null) {
+      throw Error('jQuery is required to use CoffeeScriptConsole');
+    }
+    if (options.$input == null) {
+      options.$input = $('#consoleInput');
+    }
+    if (options.$output == null) {
+      options.$output = $('#consoleOutput');
+    }
+    if (store && this.storeInput) {
+      this.history = store.get('CoffeeScriptConsole_history') || [];
+    }
+    this.suggestions = [];
+    for (attr in options) {
+      this[attr] = options[attr];
+    }
+    if (store && this.storeOutput) {
+      outputHistory = store.get('CoffeeScriptConsole_output') || [];
+      for (_i = 0, _len = outputHistory.length; _i < _len; _i++) {
+        o = outputHistory[_i];
+        this.echo(o.output, o.classification, false);
+      }
+    }
+    this.init();
+  }
+
   CoffeeScriptConsole.prototype.lastCommand = function() {
     return history[history.length] || null;
   };
@@ -143,39 +176,12 @@ CoffeeScriptConsole = (function() {
     if (lines === null) {
       lines = $e.val().split('\n').length;
     }
-    return $e.css('height', lines + 'em');
+    if (this.adjustInputHeightUnit) {
+      return $e.css('height', (lines * 1.5) + this.adjustInputHeightUnit);
+    } else {
+      return $e.attr('rows', lines);
+    }
   };
-
-  function CoffeeScriptConsole(options) {
-    var attr, o, outputHistory, _i, _len;
-    if (options == null) {
-      options = {};
-    }
-    if (typeof $ === "undefined" || $ === null) {
-      throw Error('jQuery is required to use CoffeeScriptConsole');
-    }
-    if (options.$input == null) {
-      options.$input = $('#consoleInput');
-    }
-    if (options.$output == null) {
-      options.$output = $('#consoleOutput');
-    }
-    if (store && this.storeInput) {
-      this.history = store.get('CoffeeScriptConsole_history') || [];
-    }
-    this.suggestions = [];
-    for (attr in options) {
-      this[attr] = options[attr];
-    }
-    if (store && this.storeOutput) {
-      outputHistory = store.get('CoffeeScriptConsole_output') || [];
-      for (_i = 0, _len = outputHistory.length; _i < _len; _i++) {
-        o = outputHistory[_i];
-        this.echo(o.output, o.classification, false);
-      }
-    }
-    this.init();
-  }
 
   CoffeeScriptConsole.prototype._keyIsTriggeredManuallay = false;
 
@@ -187,31 +193,33 @@ CoffeeScriptConsole = (function() {
     $e = $(this.outputContainer);
     $output = this.$output;
     cssClass = '';
-    if (typeof classification === 'string') {
+    if (typeof classification === 'string' && classification !== 'evalOutput') {
       cssClass = classification;
+      $e.addClass(cssClass);
+    } else {
       if (classification === 'evalOutput' && !this.echoEvalOutput) {
         return $e;
       }
-    }
-    if (typeof output === 'function') {
-      cssClass = 'function';
-    } else if (typeof output === 'number') {
-      cssClass = 'number';
-    } else if (typeof output === 'boolean') {
-      cssClass = 'boolean';
-    } else if (typeof output === 'string') {
-      cssClass = 'string';
-    } else if (output === void 0) {
-      cssClass = 'undefined';
-    } else if (typeof output === 'object') {
-      if (this._objectIsError(output)) {
-        cssClass = 'error';
-      } else if (output === null) {
-        cssClass = 'null';
-      } else if ((output != null ? output.constructor : void 0) === Array) {
-        cssClass = 'array';
-      } else {
-        cssClass = 'object';
+      if (typeof output === 'function') {
+        cssClass = 'function';
+      } else if (typeof output === 'number') {
+        cssClass = 'number';
+      } else if (typeof output === 'boolean') {
+        cssClass = 'boolean';
+      } else if (typeof output === 'string') {
+        cssClass = 'string';
+      } else if (output === void 0) {
+        cssClass = 'undefined';
+      } else if (typeof output === 'object') {
+        if (this._objectIsError(output)) {
+          cssClass = 'error';
+        } else if (output === null) {
+          cssClass = 'null';
+        } else if ((output != null ? output.constructor : void 0) === Array) {
+          cssClass = 'array';
+        } else {
+          cssClass = 'object';
+        }
       }
     }
     if (cssClass) {
@@ -220,7 +228,7 @@ CoffeeScriptConsole = (function() {
     if (store && doStore) {
       history = store.get('CoffeeScriptConsole_output') || [];
       history.push({
-        output: output,
+        output: this._resultToString(output),
         classification: cssClass
       });
       store.set('CoffeeScriptConsole_output', history);
@@ -243,10 +251,8 @@ CoffeeScriptConsole = (function() {
       var code, cursorPosition, linesCount;
       code = $(this).val();
       cursorPosition = $input.get(0).selectionStart;
-      if ((e.keyCode === 13 && e.shiftKey) || e.keyCode === 8) {
-        linesCount = code.split('\n').length;
-        self._adjustTextareaHeight($input);
-      }
+      linesCount = code.split('\n').length;
+      self._adjustTextareaHeight($input);
       if (e.keyCode === 9 && cursorPosition !== code.length) {
         return self._insertAtCursor($input, '  ');
       }
@@ -254,7 +260,7 @@ CoffeeScriptConsole = (function() {
     suggestionFor = null;
     suggestionNr = 0;
     return $input.on('keydown', function(e) {
-      var $e, code, cursorPosition, js, linesCount, originalCode, output, suggestions, _ref, _ref1;
+      var code, cursorPosition, linesCount, originalCode, suggestions, _ref, _ref1;
       code = originalCode = $(this).val();
       cursorPosition = $input.get(0).selectionStart;
       linesCount = code.split('\n').length;
@@ -320,31 +326,42 @@ CoffeeScriptConsole = (function() {
         }
       } else if (e.keyCode === 13 && !e.shiftKey) {
         e.preventDefault();
-        try {
-          js = CoffeeScript.compile(code, {
-            bare: true
-          });
-          output = eval.call(window, js);
-          $(this).val('');
-          self._currentHistoryPosition = null;
-          self.addToHistory(code);
-          $e = self.echo(output, 'evalOutput');
-          if (self._resultToString(output) === '') {
-            return;
-          }
-          self.onAfterEvaluate(output, $e);
-        } catch (_error) {
-          e = _error;
-          $input.addClass('error');
-          $e = self.echo(e, 'evalOutput');
-          self.onCodeError(e, $e);
-        }
+        self.executeCode();
       }
       if (typeof code === 'string') {
         self._lastPrompt = code.trim();
       }
       return self._adjustTextareaHeight($(this));
     });
+  };
+
+  CoffeeScriptConsole.prototype.executeCode = function(code, $input) {
+    var $e, e, js, output, _ref;
+    if (code == null) {
+      code = (_ref = this.$input) != null ? _ref.val() : void 0;
+    }
+    if ($input == null) {
+      $input = this.$input;
+    }
+    try {
+      js = CoffeeScript.compile(code, {
+        bare: true
+      });
+      output = eval.call(window, js);
+      $input.val('');
+      this._currentHistoryPosition = null;
+      this.addToHistory(code);
+      $e = this.echo(output, 'evalOutput');
+      if (this._resultToString(output) === '') {
+        return;
+      }
+      return this.onAfterEvaluate(output, $e);
+    } catch (_error) {
+      e = _error;
+      $input.addClass('error');
+      $e = this.echo(e, 'evalOutput');
+      return this.onCodeError(e, $e);
+    }
   };
 
   CoffeeScriptConsole.prototype.onAfterEvaluate = function(output, $e) {};
