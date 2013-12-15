@@ -1,6 +1,7 @@
 html * {
   margin: 0;
-  padding: 0; }
+  padding: 0;
+  list-style: none; }
 
 html, body, #main {
   position: relative;
@@ -49,19 +50,47 @@ body {
     padding-bottom: 0;
     opacity: 1;
     height: auto; }
-  .outputResult.boolean {
+  .outputResult li.string span.value {
+    color: black; }
+  .outputResult.boolean, .outputResult li.boolean span.value {
     color: #4eaaa7; }
-  .outputResult.number {
+  .outputResult.number, .outputResult li.number span.value {
     color: #f38346; }
-  .outputResult.object {
-    color: #666666; }
-  .outputResult.function {
+  .outputResult.function, .outputResult li.function span.value {
     color: #67bf99; }
-  .outputResult.undefined {
+  .outputResult.undefined, .outputResult li.undefined span.value {
     color: #d47ed1; }
-    .outputResult.undefined.evalOutput {
+    .outputResult.undefined.evalOutput, .outputResult li.undefined span.value.evalOutput {
       display: none; }
   .outputResult.array {
     color: #429db7; }
+  .outputResult.object {
+    color: #666666; }
+  .outputResult ol.array {
+    list-style: none;
+    display: inline;
+    color: #666666; }
+    .outputResult ol.array:before {
+      content: "["; }
+    .outputResult ol.array:after {
+      content: "]"; }
+    .outputResult ol.array li {
+      display: block; }
+    .outputResult ol.array > li:after {
+      content: ","; }
+    .outputResult ol.array > li:last-child:after {
+      content: ""; }
+  .outputResult ul.object {
+    list-style: none;
+    display: inline; }
+    .outputResult ul.object:before {
+      content: "{"; }
+    .outputResult ul.object:after {
+      content: "}"; }
+  .outputResult ol.array li, .outputResult ul.object li {
+    margin-left: 1em;
+    list-style: none; }
+    .outputResult ol.array li span.attribute:after, .outputResult ul.object li span.attribute:after {
+      content: ": "; }
 
 /*# sourceMappingURL=csc.css.map */

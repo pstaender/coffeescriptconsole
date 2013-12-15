@@ -7,6 +7,6 @@ runCommand = (name, args) ->
   proc.on          'exit', (status) -> process.exit(1) if status != 0
 
 task 'assets:watch', 'Watch source files and build JS & CSS', (options) ->
-  runCommand 'sass', ['--watch', '--sourcemap', 'css']
-  runCommand 'coffee',  ['-cbwm', 'javascripts/']
+  runCommand 'sass', [ '--watch', '--sourcemap', 'css' ]
+  runCommand 'coffee',  [ '-cbwmo', 'javascripts/', 'src/' ]
 

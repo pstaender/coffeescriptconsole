@@ -1,6 +1,7 @@
 html *
   margin: 0
   padding: 0
+  list-style: none
 html, body, #main
   position: relative
   width: 100%
@@ -43,17 +44,49 @@ body
     padding-bottom: 0
     opacity: 1
     height: auto
-  &.boolean
+  li.string span.value
+    color: #000
+  &.boolean, li.boolean span.value
     color: #4eaaa7
-  &.number
+  &.number, li.number span.value
     color: #f38346
-  &.object
-    color: #666
-  &.function
+  &.function, li.function span.value
     color: #67bf99
-  &.undefined
+  &.undefined, li.undefined span.value
     color: #d47ed1
     &.evalOutput
       display: none
   &.array
     color: #429db7
+  &.object
+    color: #666
+  ol.array
+    list-style: none
+    display: inline
+    color: #666
+    &:before
+      content: '['
+    &:after
+      content: ']'
+    // ul.object li
+    //   display: block
+    li
+      display: block //inline
+    > li
+      &:after
+        content: ','
+      &:last-child:after
+        content: ''
+  ul.object
+    list-style: none
+    display: inline
+    &:before
+      content: '{'
+    &:after
+      content: '}'
+  ol.array, ul.object
+    li
+      margin-left: 1em
+      list-style: none
+      span.attribute:after
+        content: ': '

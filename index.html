@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en-us">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>coffeescript console</title>
+  <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="css/csc.css" />
   <script type="text/javascript" src="javascripts/lib/jquery.min.js"></script>
   <script type="text/javascript" src="javascripts/lib/coffee-script.js"></script>
   <script type="text/javascript" src="javascripts/lib/store.min.js"></script>
+  <script type="text/javascript" src="javascripts/json2html.js"></script>
   <script type="text/javascript" src="javascripts/csc.js"></script>
   <script type="text/javascript">
   var usage = function() {
@@ -77,7 +78,8 @@
 <body>
   <div id="main">
     <textarea id="consoleInput" class="consoleTypo" autofocus="autofocus">usage() # press enter</textarea>
-    <div id="consoleOutput">
+    <div id="consoleOutput"></div>
+    <div id="consoleDashboard">
     </div>
   </div>
 </body>

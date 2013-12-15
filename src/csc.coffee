@@ -72,11 +72,13 @@ class CoffeeScriptConsole
   _resultToString: (output) ->
     if typeof output is 'object' and output isnt null
       if output.constructor is Array
-        JSON.stringify output
+        json2html(output)
+        #JSON.stringify output
       else if @_objectIsError(output)
         output.message
       else
-        JSON.stringify output, null, '  '
+        json2html(output)
+        #JSON.stringify output, null, '  '
     else if output is undefined
       'undefined'
     else if typeof output is 'function'
@@ -170,7 +172,10 @@ class CoffeeScriptConsole
       history.push output: @_resultToString(output) , classification: cssClass
       store.set('CoffeeScriptConsole_output', history)
     outputAsString = @_resultToString(output)
-    $e.text outputAsString
+    if /^\<.+\>/.test(outputAsString)
+      $e.html outputAsString
+    else
+      $e.text outputAsString
     $output.prepend $e
     setTimeout ->
       $e.addClass 'visible'

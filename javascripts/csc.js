@@ -114,11 +114,11 @@ CoffeeScriptConsole = (function() {
   CoffeeScriptConsole.prototype._resultToString = function(output) {
     if (typeof output === 'object' && output !== null) {
       if (output.constructor === Array) {
-        return JSON.stringify(output);
+        return json2html(output);
       } else if (this._objectIsError(output)) {
         return output.message;
       } else {
-        return JSON.stringify(output, null, '  ');
+        return json2html(output);
       }
     } else if (output === void 0) {
       return 'undefined';
@@ -234,7 +234,11 @@ CoffeeScriptConsole = (function() {
       store.set('CoffeeScriptConsole_output', history);
     }
     outputAsString = this._resultToString(output);
-    $e.text(outputAsString);
+    if (/^\<.+\>/.test(outputAsString)) {
+      $e.html(outputAsString);
+    } else {
+      $e.text(outputAsString);
+    }
     $output.prepend($e);
     setTimeout(function() {
       return $e.addClass('visible');
