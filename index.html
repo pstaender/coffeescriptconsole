@@ -3,6 +3,8 @@
 <head>
   <title>coffeescript console</title>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="webfonts/css/csc.css">
+  <link rel="stylesheet" href="webfonts/css/animation.css">
   <link rel="stylesheet" type="text/css" href="css/csc.css" />
   <script type="text/javascript" src="javascripts/lib/jquery.min.js"></script>
   <script type="text/javascript" src="javascripts/lib/coffee-script.js"></script>
@@ -25,6 +27,7 @@
   }
 
   $(window).ready(function(){
+    var $consoleDashboard = $('#consoleDashboard');
     var csc = new CoffeeScriptConsole({
       $input: $('#consoleInput'),
       $output: $('#consoleOutput'),
@@ -47,14 +50,30 @@
 
     window.echoEvalOutput = function(trueOrFalse) {
       if (typeof trueOrFalse === 'boolean') {
+        $flag = $('#consoleDashboard .echoEvalOutput i')
+        if (trueOrFalse) {
+          $flag.addClass('icon-eye');
+          $flag.removeClass('icon-eye-off');
+        } else {
+          $flag.addClass('icon-eye-off');
+          $flag.removeClass('icon-eye');
+        }
         csc.echoEvalOutput = trueOrFalse;
         if (store)
           store.set('echoEvalOutput', trueOrFalse);
       }
     }
 
+    if (store) {
+      window.echoEvalOutput(typeof store.get('echoEvalOutput') === 'boolean' ? store.get('echoEvalOutput') : true);
+    }
+
     window.load = function(url, cb) {
       return $.getScript(url, cb);
+    }
+
+    var toggleEchoEvalOutput = function() {
+      window.echoEvalOutput(!csc.echoEvalOutput);
     }
 
     $(document).on('keydown', function(e) {
@@ -62,15 +81,29 @@
       if ((e.keyCode === 75 && e.metaKey) || (e.keyCode === 75 && e.ctrlKey)) {
         // cmd + k + shift, toggle echo eval output
         if (e.shiftKey) {
-          csc.echoEvalOutput = !csc.echoEvalOutput;
+          toggleEchoEvalOutput();
         } else {
           window.clear();
         }
       }
     });
 
+    $iconDark = $consoleDashboard.find('i.icon-ajust');
+
+    $iconDark.on('click', function() {
+      $('body').toggleClass('dark');
+      store.set('darkColorTheme', $('body').hasClass('dark'));
+    });
+
+    $consoleDashboard.find('i.icon-eye, i.icon-eye-off').on('click', function(){
+      toggleEchoEvalOutput();
+    });
+
     if (store) {
       window.echoEvalOutput(store.get('echoEvalOutput'));
+      if (store.get('darkColorTheme')) {
+        $iconDark.trigger('click');
+      }
     }
   });
   </script>
@@ -80,6 +113,11 @@
     <textarea id="consoleInput" class="consoleTypo" autofocus="autofocus">usage() # press enter</textarea>
     <div id="consoleOutput"></div>
     <div id="consoleDashboard">
+      <span class="echoEvalOutput">
+        <i class="icon-eye"></i>
+      </span>
+      <a href="https://github.com/pstaender/coffeescriptconsole"><i class="icon-github-circled"></i></a>
+      <i class="icon-ajust"></i>
     </div>
   </div>
 </body>

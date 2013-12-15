@@ -7,14 +7,32 @@ html, body, #main
   width: 100%
 body
   background: #f6f6f6
-  color: #222
   font-family: 'Lucida'
   font-size: 14px
+  transition: background 0.2s
+body, a
+  color: #222
+body.dark
+  background: #333
+  color: #eee
+  a
+    color: #eee
 .consoleTypo, .outputResult
   font-family: Menlo, "Courier New", Terminal, monospace
   color: #999
   &.error
     color: #ffadad
+.dark .outputResult
+  color: #ddd
+  &.error
+    color: #e64141
+#consoleDashboard
+  position: fixed
+  bottom: 1em
+  right: 1em
+  font-size: 22px
+  i:hover
+    cursor: pointer
 #consoleInput
   background: #fff
   width: 95%
@@ -29,8 +47,15 @@ body
   margin-top: 0.5em
   overflow: hidden
   outline: none
+.dark #consoleInput
+  background: #222
+  color: #fff
 #consoleInput, .outputResult
   font-size: 20px
+.dark
+  .outputResult
+    &.object, ol.array, li.string span.value
+      color: #ddd
 .outputResult
   display: block
   padding: 1em

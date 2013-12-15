@@ -9,15 +9,37 @@ html, body, #main {
 
 body {
   background: #f6f6f6;
-  color: #222222;
   font-family: "Lucida";
-  font-size: 14px; }
+  font-size: 14px;
+  transition: background 0.2s; }
+
+body, a {
+  color: #222222; }
+
+body.dark {
+  background: #333333;
+  color: #eeeeee; }
+  body.dark a {
+    color: #eeeeee; }
 
 .consoleTypo, .outputResult {
   font-family: Menlo, "Courier New", Terminal, monospace;
   color: #999999; }
   .consoleTypo.error, .outputResult.error {
     color: #ffadad; }
+
+.dark .outputResult {
+  color: #dddddd; }
+  .dark .outputResult.error {
+    color: #e64141; }
+
+#consoleDashboard {
+  position: fixed;
+  bottom: 1em;
+  right: 1em;
+  font-size: 22px; }
+  #consoleDashboard i:hover {
+    cursor: pointer; }
 
 #consoleInput {
   background: white;
@@ -34,8 +56,15 @@ body {
   overflow: hidden;
   outline: none; }
 
+.dark #consoleInput {
+  background: #222222;
+  color: white; }
+
 #consoleInput, .outputResult {
   font-size: 20px; }
+
+.dark .outputResult.object, .dark .outputResult ol.array, .dark .outputResult li.string span.value {
+  color: #dddddd; }
 
 .outputResult {
   display: block;
