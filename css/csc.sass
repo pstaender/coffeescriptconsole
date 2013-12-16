@@ -45,7 +45,7 @@ body.dark
   background: #fff
   width: 95%
   border: 0
-  padding: 1em
+  padding: 1.5%
   margin: 0 auto
   resize: none
   min-height: 3em
@@ -64,19 +64,31 @@ body.dark
   .outputResult
     &.object, ol.array, li.string span.value
       color: #ddd
+    &:hover
+      background: #222
+    i
+      color: #ddd
 .outputResult
   display: block
-  padding: 1em
+  position: relative
+  padding: 1.5%
   padding-bottom: 0
   position: relative
   opacity: 0
   height: 0
   transition: all 0.2s ease-out
+  i
+    color: #000
+  i.icon-cancel
+    position: absolute
+    right: 1.5%
+
   &:hover
     cursor: pointer
+    background: #fdfdfd
   &.visible
-    padding: 1em
-    padding-bottom: 0
+    margin: 1%
+    padding: 0.5em
     opacity: 1
     height: auto
   li.string span.value

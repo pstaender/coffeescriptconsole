@@ -113,11 +113,21 @@
       if ($(e.target).hasClass('attribute') || $(e.target).hasClass('value')) {
         $input.val($(e.target).html());
       } else {
-        $input.val($(this).data('code'));
+        //
+        $input.val($(this).data('outputString'));
       }
-
       $input.focus();
     })
+    $('#consoleOutput .outputResult').live('dblclick',function(e) {
+      $input.val($(this).data('code'));
+      $input.focus();
+    });
+    $('#consoleOutput .outputResult i.icon-cancel').live('click',function(){
+      var $e = $(this).parent();
+      // console.log($e.data('position'));
+      csc.removeFromOutputHistory($e.data('position'));
+      $e.remove();
+    });
   });
   </script>
 </head>

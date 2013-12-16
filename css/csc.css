@@ -52,7 +52,7 @@ body.dark {
   background: white;
   width: 95%;
   border: 0;
-  padding: 1em;
+  padding: 1.5%;
   margin: 0 auto;
   resize: none;
   min-height: 3em;
@@ -72,20 +72,31 @@ body.dark {
 
 .dark .outputResult.object, .dark .outputResult ol.array, .dark .outputResult li.string span.value {
   color: #dddddd; }
+.dark .outputResult:hover {
+  background: #222222; }
+.dark .outputResult i {
+  color: #dddddd; }
 
 .outputResult {
   display: block;
-  padding: 1em;
+  position: relative;
+  padding: 1.5%;
   padding-bottom: 0;
   position: relative;
   opacity: 0;
   height: 0;
   transition: all 0.2s ease-out; }
+  .outputResult i {
+    color: black; }
+  .outputResult i.icon-cancel {
+    position: absolute;
+    right: 1.5%; }
   .outputResult:hover {
-    cursor: pointer; }
+    cursor: pointer;
+    background: #fdfdfd; }
   .outputResult.visible {
-    padding: 1em;
-    padding-bottom: 0;
+    margin: 1%;
+    padding: 0.5em;
     opacity: 1;
     height: auto; }
   .outputResult li.string span.value {

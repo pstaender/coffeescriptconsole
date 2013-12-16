@@ -1,7 +1,7 @@
 class CoffeeScriptConsole
 
   # options
-  outputContainer: '<pre class="outputResult"></pre>'
+  outputContainer: '<pre class="outputResult"><i class="icon-cancel"></i><span class="data"></span></pre>'
   echoEvalOutput: true
   storeInput: true
   storeOutput: true
@@ -18,10 +18,12 @@ class CoffeeScriptConsole
     # apply options on object
     for attr of options
       @[attr] = options[attr]
-    if store and @storeOutput
-      outputHistory = store.get('CoffeeScriptConsole_output') or []
-      for o in outputHistory
-        @echo o.output, { classification: o.classification, doStore: false, data: { code: o.code } }
+    @store = store or null
+    if @store and @storeOutput
+      @outputHistory = @store.get('CoffeeScriptConsole_output') or []
+      for o, i in @outputHistory
+        if typeof o is 'object' and o
+          $e = @echo o.output, { classification: o.classification, doStore: false, data: { position: i, code: o.code, outputString: o.outputString } }
     @init()
 
   lastCommand: ->
@@ -37,7 +39,7 @@ class CoffeeScriptConsole
     if command
       return if @history[@history.length-1] and @history[@history.length-1] is command
       @history.push(command)
-    store.set('CoffeeScriptConsole_history', @history) if store and @storeInput
+    @store.set('CoffeeScriptConsole_history', @history) if @store and @storeInput
 
   historySuggestionsFor: (term) ->
     term = String(term).trim()
@@ -59,10 +61,21 @@ class CoffeeScriptConsole
 
   clearInputHistory: ->
     @history = []
-    store.set('CoffeeScriptConsole_history', @history) if store and @storeInput
+    @store?.set('CoffeeScriptConsole_history', @history) if @storeInput
+
+
+
+  storeOutputHistory: () ->
+    @store?.set('CoffeeScriptConsole_output', @outputHistory) if @storeOutput
+
+  removeFromOutputHistory: (pos) ->
+
+    if @store and @storeOutput and @outputHistory[pos]
+      delete(@outputHistory[pos])
+      @storeOutputHistory()
 
   clearOutputHistory: ->
-    store.set('CoffeeScriptConsole_output', []) if store and @storeOutput
+    @storeOutputHistory() if @store and @storeOutput
 
   _lastPrompt: ''
   _objectIsError: (o) ->
@@ -172,17 +185,17 @@ class CoffeeScriptConsole
           cssClass = 'object'
     if cssClass
       $e.addClass(cssClass)
-    $e.data('outputString', @outputString(output))
-    if store and options.doStore
-      history = store.get('CoffeeScriptConsole_output') or []
-      historyData = output: @outputStringFormatted(output), outputAsString: $e.data('outputString'), classification: cssClass, code: options.data?.code
+    $e.data('outputString', @outputString(output)) unless $e.data('outputString')
+    if @store and options.doStore
+      history = @outputHistory
+      historyData = output: @outputStringFormatted(output), classification: cssClass, code: options.data?.code, outputString: $e.data('outputString')
       history.push(historyData)
       store.set('CoffeeScriptConsole_output', history)
     outputAsString = @outputStringFormatted(output)
     if /^\<.+\>/.test(outputAsString)
-      $e.html outputAsString
+      $e.find('span.data').html outputAsString
     else
-      $e.text outputAsString
+      $e.find('span.data').text outputAsString
     $output.prepend $e
     setTimeout ->
       $e.addClass 'visible'
@@ -208,6 +221,9 @@ class CoffeeScriptConsole
 
     suggestionFor = null
     suggestionNr = 0
+
+    $input.on 'focus', (e) ->
+      self._adjustTextareaHeight($(this))
 
     $input.on 'keydown', (e) ->
       code = originalCode = $(@).val()
@@ -276,13 +292,12 @@ class CoffeeScriptConsole
   executeCode: (code = @$input?.val(), $input = @$input) ->
     # execute code
     try
-      # output = CoffeeScript.eval code, sandbox: @
       js = CoffeeScript.compile code, bare: true
       output = eval.call window, js
       $input.val('')
       @_currentHistoryPosition = null
       @addToHistory(code)
-      $e = @echo(output, { classification: 'evalOutput', data: { code: code } })
+      $e = @echo(output, { classification: 'evalOutput', data: { code: code, position: @outputHistory.length } })
       $e.data('code', code)
       return if @outputStringFormatted(output) is ''
       @onAfterEvaluate output, $e
