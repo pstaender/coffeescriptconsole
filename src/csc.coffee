@@ -216,12 +216,13 @@ class CoffeeScriptConsole
           if suggestionFor is null
             suggestionFor = code
           suggestions = self.historySuggestionsFor(suggestionFor)
-          $(@).val(suggestions[suggestionNr]) if suggestions[suggestionNr]
-          if suggestionNr+1 <= suggestions.length
-            suggestionNr++
-          else
-            suggestionNr = 0
-            $(@).val('')
+          if suggestions[suggestionNr]
+            $(@).val(suggestions[suggestionNr])
+            if suggestionNr+1 <= suggestions.length
+              suggestionNr++
+            else
+              suggestionNr = 0
+              $(@).val('')
 
         else
           suggestionFor = null

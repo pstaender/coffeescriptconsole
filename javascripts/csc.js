@@ -280,12 +280,12 @@ CoffeeScriptConsole = (function() {
           suggestions = self.historySuggestionsFor(suggestionFor);
           if (suggestions[suggestionNr]) {
             $(this).val(suggestions[suggestionNr]);
-          }
-          if (suggestionNr + 1 <= suggestions.length) {
-            suggestionNr++;
-          } else {
-            suggestionNr = 0;
-            $(this).val('');
+            if (suggestionNr + 1 <= suggestions.length) {
+              suggestionNr++;
+            } else {
+              suggestionNr = 0;
+              $(this).val('');
+            }
           }
         } else {
           suggestionFor = null;

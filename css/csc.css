@@ -87,9 +87,9 @@ body.dark {
     color: #f38346; }
   .outputResult.function, .outputResult li.function span.value {
     color: #67bf99; }
-  .outputResult.undefined, .outputResult li.undefined span.value {
+  .outputResult.undefined, .outputResult li.undefined span.value, .outputResult .circularReference {
     color: #d47ed1; }
-    .outputResult.undefined.evalOutput, .outputResult li.undefined span.value.evalOutput {
+    .outputResult.undefined.evalOutput, .outputResult li.undefined span.value.evalOutput, .outputResult .circularReference.evalOutput {
       display: none; }
   .outputResult.array {
     color: #429db7; }

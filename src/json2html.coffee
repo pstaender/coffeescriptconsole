@@ -1,13 +1,21 @@
 do ->
-  Json2Html = (o) ->
+  # TODO: fix circular handling
+  Json2Html = (o, options = {}) ->
+    @references ?= []
+    # apply options on object
+    for attr of options
+      @[attr] = options[attr]
     if typeof o is 'object' and o isnt null
+      return @html += "<span class=\"circularReference\">@circularReference</span>" if @references.indexOf(o) isnt -1
+      @references.push(o)
       if o.constructor is Array
         parts = for part in o
           "<li class=\"#{typeof part}\"><span class=\"value\">#{new Json2Html(part).toString()}</span></li>"
         @html += "<ol class=\"array\">#{parts.join('')}</ol>"
       else
         parts = for attr of o
-          "<li class=\"#{typeof o[attr]}\"><span class=\"attribute\">#{attr}</span><span class=\"value\">#{new Json2Html(o[attr]).toString()}</span></li>"
+          if o.hasOwnProperty(attr)
+            "<li class=\"#{typeof o[attr]}\"><span class=\"attribute\">#{attr}</span><span class=\"value\">#{new Json2Html(o[attr], references: @references).toString()}</span></li>"
         @html += "<ul class=\"object\">#{parts.join('')}</ul>"
     else if typeof o is 'string'
       @html += @stringDelimiter + o.replace(new RegExp("[\\\\#{@stringDelimiter}]", 'g', '\\$&')) + @stringDelimiter
@@ -16,6 +24,7 @@ do ->
 
   Json2Html::stringDelimiter = '"'
   Json2Html::html = ''
+  Json2Html::references = null
   Json2Html::toString = -> @html
 
   json2html = (o) ->
