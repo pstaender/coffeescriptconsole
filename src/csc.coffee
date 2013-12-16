@@ -75,7 +75,11 @@ class CoffeeScriptConsole
       @storeOutputHistory()
 
   clearOutputHistory: ->
-    @storeOutputHistory() if @store and @storeOutput
+    @outputHistory = []
+    if @store and @storeOutput
+      true
+    else
+      false
 
   _lastPrompt: ''
   _objectIsError: (o) ->
@@ -289,11 +293,17 @@ class CoffeeScriptConsole
         self._lastPrompt = code.trim()
       self._adjustTextareaHeight($(@))
 
+  compile: (code) ->
+    CoffeeScript.compile code, bare: true
+
+  eval: (code, context = window) ->
+    eval.call window, code
+
   executeCode: (code = @$input?.val(), $input = @$input) ->
     # execute code
     try
-      js = CoffeeScript.compile code, bare: true
-      output = eval.call window, js
+      js = @compile(code)
+      output = @eval(js)
       $input.val('')
       @_currentHistoryPosition = null
       @addToHistory(code)

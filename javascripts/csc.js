@@ -123,8 +123,11 @@ CoffeeScriptConsole = (function() {
   };
 
   CoffeeScriptConsole.prototype.clearOutputHistory = function() {
+    this.outputHistory = [];
     if (this.store && this.storeOutput) {
-      return this.storeOutputHistory();
+      return true;
+    } else {
+      return false;
     }
   };
 
@@ -391,6 +394,19 @@ CoffeeScriptConsole = (function() {
     });
   };
 
+  CoffeeScriptConsole.prototype.compile = function(code) {
+    return CoffeeScript.compile(code, {
+      bare: true
+    });
+  };
+
+  CoffeeScriptConsole.prototype["eval"] = function(code, context) {
+    if (context == null) {
+      context = window;
+    }
+    return eval.call(window, code);
+  };
+
   CoffeeScriptConsole.prototype.executeCode = function(code, $input) {
     var $e, e, js, output, _ref;
     if (code == null) {
@@ -400,10 +416,8 @@ CoffeeScriptConsole = (function() {
       $input = this.$input;
     }
     try {
-      js = CoffeeScript.compile(code, {
-        bare: true
-      });
-      output = eval.call(window, js);
+      js = this.compile(code);
+      output = this["eval"](js);
       $input.val('');
       this._currentHistoryPosition = null;
       this.addToHistory(code);

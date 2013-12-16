@@ -73,7 +73,7 @@ body.dark {
 .dark .outputResult.object, .dark .outputResult ol.array, .dark .outputResult li.string span.value {
   color: #dddddd; }
 .dark .outputResult:hover {
-  background: #222222; }
+  background: #262626; }
 .dark .outputResult i {
   color: #dddddd; }
 
@@ -87,13 +87,16 @@ body.dark {
   height: 0;
   transition: all 0.2s ease-out; }
   .outputResult i {
-    color: black; }
+    color: black;
+    opacity: 0.15; }
   .outputResult i.icon-cancel {
     position: absolute;
     right: 1.5%; }
   .outputResult:hover {
     cursor: pointer;
     background: #fdfdfd; }
+    .outputResult:hover i {
+      opacity: 0.6; }
   .outputResult.visible {
     margin: 1%;
     padding: 0.5em;
