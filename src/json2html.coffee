@@ -18,13 +18,17 @@ do ->
             "<li class=\"#{typeof o[attr]}\"><span class=\"attribute\">#{attr}</span><span class=\"value\">#{new Json2Html(o[attr], references: @references).toString()}</span></li>"
         @html += "<ul class=\"object\">#{parts.join('')}</ul>"
     else if typeof o is 'string'
-      @html += @stringDelimiter + o.replace(new RegExp("[\\\\#{@stringDelimiter}]", 'g', '\\$&')) + @stringDelimiter
+      if @detectUrls and /^[a-z]+\:\/\//g.test(o)
+        @html += "<a href=\"#{o}\">#{o}</a>"
+      else
+        @html += @stringDelimiter + o.replace(new RegExp("[\\\\#{@stringDelimiter}]", 'g', '\\$&')) + @stringDelimiter
     else
       @html += String(o)
 
   Json2Html::stringDelimiter = '"'
   Json2Html::html = ''
   Json2Html::references = null
+  Json2Html::detectUrls = true
   Json2Html::toString = -> @html
 
   json2html = (o) ->

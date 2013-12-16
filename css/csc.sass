@@ -10,13 +10,17 @@ body
   font-family: 'Lucida'
   font-size: 14px
   transition: background 0.2s
-body, a
   color: #222
+a
+  color: #309ffc//#3381c9
+  // font-weight: bolder
+  text-decoration: none
+  &:hover
+    text-decoration: underline
 body.dark
   background: #333
   color: #eee
-  a
-    color: #eee
+
 .consoleTypo, .outputResult
   font-family: Menlo, "Courier New", Terminal, monospace
   color: #999
@@ -33,6 +37,10 @@ body.dark
   font-size: 22px
   i:hover
     cursor: pointer
+  a
+    color: #000
+.dark #consoleDashboard a
+  color: #fff
 #consoleInput
   background: #fff
   width: 95%
@@ -64,6 +72,8 @@ body.dark
   opacity: 0
   height: 0
   transition: all 0.2s ease-out
+  &:hover
+    cursor: pointer
   &.visible
     padding: 1em
     padding-bottom: 0

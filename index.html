@@ -28,10 +28,12 @@
 
   $(window).ready(function(){
     var $consoleDashboard = $('#consoleDashboard');
+    var $input = $('#consoleInput');
+    var $output = $('#consoleOutput');
     var csc = new CoffeeScriptConsole({
-      $input: $('#consoleInput'),
-      $output: $('#consoleOutput'),
-      suggestions: 'usage(),clearHistory(),clearScreen(),echoEvalOutput(true),echo,clear()'.split(',')
+      $input: $input,
+      $output: $output,
+      suggestions: 'usage(),clearHistory(),clearScreen(),echoEvalOutput(true),echo,clear()'.split(','),
     });
     window.puts = window.echo = function(output) {
       csc.echo(output);
@@ -106,6 +108,16 @@
         $iconDark.trigger('click');
       }
     }
+
+    $('#consoleOutput .outputResult').live('click',function(e){
+      if ($(e.target).hasClass('attribute') || $(e.target).hasClass('value')) {
+        $input.val($(e.target).html());
+      } else {
+        $input.val($(this).data('code'));
+      }
+
+      $input.focus();
+    })
   });
   </script>
 </head>

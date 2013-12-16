@@ -21,7 +21,7 @@ class CoffeeScriptConsole
     if store and @storeOutput
       outputHistory = store.get('CoffeeScriptConsole_output') or []
       for o in outputHistory
-        @echo o.output, o.classification, false
+        @echo o.output, { classification: o.classification, doStore: false, data: { code: o.code } }
     @init()
 
   lastCommand: ->
@@ -69,16 +69,20 @@ class CoffeeScriptConsole
     # EvalError, RangeError, ReferenceErrorl SyntaxError, TypeError, URIError
     if o and typeof o.message isnt 'undefined' then true else false
 
-  _resultToString: (output) ->
+  outputString: (output) ->
+    if typeof output is 'object' and output isnt null
+      JSON.stringify(output, null, '  ')
+    else
+      String(output)
+
+  outputStringFormatted: (output) ->
     if typeof output is 'object' and output isnt null
       if output.constructor is Array
         json2html(output)
-        #JSON.stringify output
       else if @_objectIsError(output)
         output.message
       else
         json2html(output)
-        #JSON.stringify output, null, '  '
     else if output is undefined
       'undefined'
     else if typeof output is 'function'
@@ -130,22 +134,23 @@ class CoffeeScriptConsole
     else
       $e.attr 'rows', lines
 
-
-
-
   _keyIsTriggeredManuallay: false
 
-  echo: (output, classification, doStore) ->
-    doStore = @storeOutput if typeof doStore isnt 'boolean'
+  echo: (output, options = {}) ->
+    options.doStore = @storeOutput if typeof options.doStore isnt 'boolean'
     $e = $(@outputContainer)
+    # attach data to $e
+    if options.data
+      for attr of options.data
+        $e.data(attr, options.data[attr])
     $output = @$output
     cssClass = ''
-    if typeof classification is 'string' and classification isnt 'evalOutput'
-      cssClass = classification
+    if typeof options.classification is 'string' and options.classification isnt 'evalOutput'
+      cssClass = options.classification
       # skip if we don't display output of eval
       $e.addClass(cssClass)
     else
-      return $e if classification is 'evalOutput' and not @echoEvalOutput
+      return $e if options.classification is 'evalOutput' and not @echoEvalOutput
       if typeof output is 'function'
         cssClass = 'function'
       else if typeof output is 'number'
@@ -167,11 +172,13 @@ class CoffeeScriptConsole
           cssClass = 'object'
     if cssClass
       $e.addClass(cssClass)
-    if store and doStore
+    $e.data('outputString', @outputString(output))
+    if store and options.doStore
       history = store.get('CoffeeScriptConsole_output') or []
-      history.push output: @_resultToString(output) , classification: cssClass
+      historyData = output: @outputStringFormatted(output), outputAsString: $e.data('outputString'), classification: cssClass, code: options.data?.code
+      history.push(historyData)
       store.set('CoffeeScriptConsole_output', history)
-    outputAsString = @_resultToString(output)
+    outputAsString = @outputStringFormatted(output)
     if /^\<.+\>/.test(outputAsString)
       $e.html outputAsString
     else
@@ -275,12 +282,13 @@ class CoffeeScriptConsole
       $input.val('')
       @_currentHistoryPosition = null
       @addToHistory(code)
-      $e = @echo(output, 'evalOutput')
-      return if @_resultToString(output) is ''
+      $e = @echo(output, { classification: 'evalOutput', data: { code: code } })
+      $e.data('code', code)
+      return if @outputStringFormatted(output) is ''
       @onAfterEvaluate output, $e
     catch e
       $input.addClass 'error'
-      $e = @echo(e, 'evalOutput')
+      $e = @echo(e, { classification: 'evalOutput', data: { error: e.message } })
       @onCodeError e, $e
 
   onAfterEvaluate: (output, $e) ->

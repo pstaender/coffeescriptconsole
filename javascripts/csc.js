@@ -37,7 +37,13 @@ CoffeeScriptConsole = (function() {
       outputHistory = store.get('CoffeeScriptConsole_output') || [];
       for (_i = 0, _len = outputHistory.length; _i < _len; _i++) {
         o = outputHistory[_i];
-        this.echo(o.output, o.classification, false);
+        this.echo(o.output, {
+          classification: o.classification,
+          doStore: false,
+          data: {
+            code: o.code
+          }
+        });
       }
     }
     this.init();
@@ -111,7 +117,15 @@ CoffeeScriptConsole = (function() {
     }
   };
 
-  CoffeeScriptConsole.prototype._resultToString = function(output) {
+  CoffeeScriptConsole.prototype.outputString = function(output) {
+    if (typeof output === 'object' && output !== null) {
+      return JSON.stringify(output, null, '  ');
+    } else {
+      return String(output);
+    }
+  };
+
+  CoffeeScriptConsole.prototype.outputStringFormatted = function(output) {
     if (typeof output === 'object' && output !== null) {
       if (output.constructor === Array) {
         return json2html(output);
@@ -185,19 +199,27 @@ CoffeeScriptConsole = (function() {
 
   CoffeeScriptConsole.prototype._keyIsTriggeredManuallay = false;
 
-  CoffeeScriptConsole.prototype.echo = function(output, classification, doStore) {
-    var $e, $output, cssClass, history, outputAsString;
-    if (typeof doStore !== 'boolean') {
-      doStore = this.storeOutput;
+  CoffeeScriptConsole.prototype.echo = function(output, options) {
+    var $e, $output, attr, cssClass, history, historyData, outputAsString;
+    if (options == null) {
+      options = {};
+    }
+    if (typeof options.doStore !== 'boolean') {
+      options.doStore = this.storeOutput;
     }
     $e = $(this.outputContainer);
+    if (options.data) {
+      for (attr in options.data) {
+        $e.data(attr, options.data[attr]);
+      }
+    }
     $output = this.$output;
     cssClass = '';
-    if (typeof classification === 'string' && classification !== 'evalOutput') {
-      cssClass = classification;
+    if (typeof options.classification === 'string' && options.classification !== 'evalOutput') {
+      cssClass = options.classification;
       $e.addClass(cssClass);
     } else {
-      if (classification === 'evalOutput' && !this.echoEvalOutput) {
+      if (options.classification === 'evalOutput' && !this.echoEvalOutput) {
         return $e;
       }
       if (typeof output === 'function') {
@@ -225,15 +247,19 @@ CoffeeScriptConsole = (function() {
     if (cssClass) {
       $e.addClass(cssClass);
     }
-    if (store && doStore) {
+    $e.data('outputString', this.outputString(output));
+    if (store && options.doStore) {
       history = store.get('CoffeeScriptConsole_output') || [];
-      history.push({
-        output: this._resultToString(output),
-        classification: cssClass
-      });
+      historyData = {
+        output: this.outputStringFormatted(output),
+        outputAsString: $e.data('outputString'),
+        classification: cssClass,
+        code: options.data.code
+      };
+      history.push(historyData);
       store.set('CoffeeScriptConsole_output', history);
     }
-    outputAsString = this._resultToString(output);
+    outputAsString = this.outputStringFormatted(output);
     if (/^\<.+\>/.test(outputAsString)) {
       $e.html(outputAsString);
     } else {
@@ -355,15 +381,26 @@ CoffeeScriptConsole = (function() {
       $input.val('');
       this._currentHistoryPosition = null;
       this.addToHistory(code);
-      $e = this.echo(output, 'evalOutput');
-      if (this._resultToString(output) === '') {
+      $e = this.echo(output, {
+        classification: 'evalOutput',
+        data: {
+          code: code
+        }
+      });
+      $e.data('code', code);
+      if (this.outputStringFormatted(output) === '') {
         return;
       }
       return this.onAfterEvaluate(output, $e);
     } catch (_error) {
       e = _error;
       $input.addClass('error');
-      $e = this.echo(e, 'evalOutput');
+      $e = this.echo(e, {
+         classification: 'evalOutput',
+        data: {
+          error: e.message
+        }
+      });
       return this.onCodeError(e, $e);
     }
   };
