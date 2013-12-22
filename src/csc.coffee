@@ -5,11 +5,11 @@ class CoffeeScriptConsole
   echoEvalOutput: true
   storeInput: true
   storeOutput: true
-  adjustInputHeightUnit: 'em' #use em
+  adjustInputHeightUnit: 'em'
+  storePrefix: 'CoffeeScriptConsole_'
 
   constructor: (options = {}) ->
-    unless $?
-      throw Error('jQuery is required to use CoffeeScriptConsole');
+    throw Error('jQuery is required to use CoffeeScriptConsole') unless $?
     # apply default values
     options.$input ?= $('#consoleInput')
     options.$output ?= $('#consoleOutput')
@@ -18,9 +18,9 @@ class CoffeeScriptConsole
     # apply options on object
     for attr of options
       @[attr] = options[attr]
-    @store = store or null
+    @store = window.store or null
     if @store and @storeOutput
-      @outputHistory = @store.get('CoffeeScriptConsole_output') or []
+      @outputHistory = @store.get(@storePrefix+'output') or []
       for o, i in @outputHistory
         if typeof o is 'object' and o
           $e = @echo o.output, { classification: o.classification, doStore: false, data: { position: i, code: o.code, outputString: o.outputString } }
@@ -34,12 +34,15 @@ class CoffeeScriptConsole
 
   _currentHistoryPosition: null
 
+  lastPrompt: ->
+    @history[@history.length-1]
+
   addToHistory: (command) ->
     command = command?.trim()
     if command
       return if @history[@history.length-1] and @history[@history.length-1] is command
       @history.push(command)
-    @store.set('CoffeeScriptConsole_history', @history) if @store and @storeInput
+    @store.set(@storePrefix+'history', @history) if @store and @storeInput
 
   historySuggestionsFor: (term) ->
     term = String(term).trim()
@@ -61,12 +64,14 @@ class CoffeeScriptConsole
 
   clearInputHistory: ->
     @history = []
-    @store?.set('CoffeeScriptConsole_history', @history) if @storeInput
-
-
+    if @storeInput
+      @store?.set(@storePrefix+'history', @history)
+      true
+    else
+      false
 
   storeOutputHistory: () ->
-    @store?.set('CoffeeScriptConsole_output', @outputHistory) if @storeOutput
+    @store?.set(@storePrefix+'output', @outputHistory) if @storeOutput
 
   removeFromOutputHistory: (pos) ->
 
@@ -76,6 +81,7 @@ class CoffeeScriptConsole
 
   clearOutputHistory: ->
     @outputHistory = []
+    @storeOutputHistory()
     if @store and @storeOutput
       true
     else
@@ -194,7 +200,7 @@ class CoffeeScriptConsole
       history = @outputHistory
       historyData = output: @outputStringFormatted(output), classification: cssClass, code: options.data?.code, outputString: $e.data('outputString')
       history.push(historyData)
-      store.set('CoffeeScriptConsole_output', history)
+      store.set(@storePrefix+'output', history)
     outputAsString = @outputStringFormatted(output)
     if /^\<.+\>/.test(outputAsString)
       $e.find('span.data').html outputAsString
@@ -299,23 +305,51 @@ class CoffeeScriptConsole
   eval: (code, context = window) ->
     eval.call window, code
 
+  onBeforeExecutingCode: (s) ->
+    if typeof s is 'string'
+      s = s.replace(/^\n*(.*)\n*$/,'$1').split('\n').join('\n')
+      # s.th. like `*name = `
+      lines = for line in s.split('\n')
+        if line and /^\s*\*[a-zA-Z_$]*[0-9a-zA-Z_$]*\s*\=\s*/.test(line)
+          codeEscaped = line.replace(/'/g, "\\'")
+          match = line.match(/^(\s*)\*([a-zA-Z_$]*[0-9a-zA-Z_$]*)\s*\=\s*(.+)\s*$/)
+          functionParts = match[3].match /^(.*)\(([^\)]*)\)\s*$/
+          deferString = "defer err, #{match[2]}"
+          if functionParts
+            functionCall = if functionParts[2] then functionParts[1]+" "+functionParts[2]+", "+deferString else functionParts[1]+" "+deferString
+          else
+            functionCall = match[3] + ", " + deferString
+          """
+            await #{functionCall}
+            if typeof echo is 'function'
+              echo(err, { classification: "\#{if err and not #{match[2]} then "error " else ""}evalOutput", data: { error: err?.message, code: '#{codeEscaped}' } }) if err
+              echo(#{match[2]}, { classification: "evalOutput", data: { code: '#{codeEscaped}' } })
+          """.split('\n').join("\n#{match[1]}")
+        else
+          line
+      s = lines.join('\n')
+    s
+
   executeCode: (code = @$input?.val(), $input = @$input) ->
     # execute code
+    code = @onBeforeExecutingCode(originalCode = code)
     try
       js = @compile(code)
       output = @eval(js)
       $input.val('')
       @_currentHistoryPosition = null
-      @addToHistory(code)
-      $e = @echo(output, { classification: 'evalOutput', data: { code: code, position: @outputHistory.length } })
-      $e.data('code', code)
+      @addToHistory(originalCode)
+      $e = @echo(output, { classification: 'evalOutput', data: { code: originalCode, position: @outputHistory.length } })
       return if @outputStringFormatted(output) is ''
       @onAfterEvaluate output, $e
     catch e
       $input.addClass 'error'
-      $e = @echo(e, { classification: 'evalOutput', data: { error: e.message } })
+      # we always display error message(s)
+      $e = @echo(e?.message or e, { classification: 'error evalOutput', data: { code: originalCode, error: e.message } })
       @onCodeError e, $e
 
   onAfterEvaluate: (output, $e) ->
 
   onCodeError: (error, $e) ->
+
+module.exports = exports = CoffeeScriptConsole if require? and exports?

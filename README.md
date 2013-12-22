@@ -13,24 +13,49 @@ Ensure that jQuery is included (is required by csc) and init with `$input` and `
   });
 ```
 
-### Commands (for the demo)
+### Commands
 
-  * press `enter` to evaluate code
   * press `shift+enter` to insert new line(s)
-  * press `keyup`/`keydown` to browse through history
+  * press `keyup`/`keydown` to browse through prompt history
   * use `echo()` instead of `console.log()` to echo
   * `clearHistory()` clears console history
+  * `clear()` clears screen
+  * `echoEvalOutput(true|false)` echo result of executed code
+
+### Keyboard Shortcuts
+
+  * `⌘+k` / `ctrl+k` clear output screen
+  * `⌘+shift+k` / `ctrl+shift+k` toggle echo eval output
+  * `tab` for autocomplete
+
+### Use console output
+
+  * **click on a result block** will put the result to the prompt
+  * **doubleclick on a result block** will put the original prompt back to the input
+  * **click on JSON attributes or values** will put the value to the prompt
+
+### Async to sync
+
+Define a variable with a `*`-prefix will await asyncronously, e.g.:
+
+```coffeescript
+  *res = $.get 'http://google.com'
+  echo *res
+```
+
+### Options
+
+In the bottom right you can toggle the evaluated output (same as with `⌘+shift+k`) and toggle betweem dark and light theme.
 
 ### What's implemented so far
 
-  * executing coffeescript code in current environment
-  * echo ”styled“ output
-  * browser through input history
+  * executing (iced-)coffeescript code in global environment
+  * ”styled“ array and json output
+  * prompt history including autocomplete
 
 ### What's missing
 
-  * syntax highlighting
-  * autocompletion
   * package.json, tests …
+  * implement require
 
-Only tested on Chrome (v27+), but should also run on other modern browsers.
+Just tested on Chrome (v27+) and Firefox (v24+) so far, but should work fine on other modern browsers (like Safari, iExplorer 10+ …)
