@@ -11,8 +11,8 @@ window.usage = ->
 
   ## Keyboard Shortcuts
 
-    * `cmd+k` clear output screen
-    * `cmd+shift+k` toggle echo eval output
+    * `⌘+k` / `ctrl+k` clear output screen
+    * `⌘+shift+k` / `ctrl+shift+k` toggle echo eval output
   """
 
 $(window).ready ->
@@ -21,14 +21,14 @@ $(window).ready ->
   $input = $("#consoleInput")
   $output = $("#consoleOutput")
 
-  csc = new CoffeeScriptConsole(
+  window.csc = csc = new CoffeeScriptConsole(
     $input: $input
     $output: $output
     suggestions: "usage(),clearHistory(),clearScreen(),echoEvalOutput(true),echo,clear()".split(",")
   )
 
-  window.puts = window.echo = (output) ->
-    csc.echo output
+  window.echo = (output, options) ->
+    csc.echo output, options
 
   window.clearHistory = ->
     csc.clearHistory()
@@ -60,12 +60,12 @@ $(window).ready ->
     window.echoEvalOutput not csc.echoEvalOutput
 
   $(document).on "keydown", (e) ->
-    $("#consoleInput").focus() # TODO: replace with less resource intensive check
-    # cmd + k, clear console
+    $("#consoleInput").focus() unless ( e.metaKey or e.shiftKey or e.ctrlKey) # TODO: replace with less resource intensive check
+    # cmd + k
     if (e.keyCode is 75 and e.metaKey) or (e.keyCode is 75 and e.ctrlKey)
-
-      # cmd + k + shift, toggle echo eval output
+      # `cmd + k + shift` toggle echo eval output
       if e.shiftKey
+      # `cmd + k` clear console
         toggleEchoEvalOutput()
       else
         window.clear()
@@ -74,30 +74,31 @@ $(window).ready ->
   $iconDark.on "click", ->
     $("body").toggleClass "dark"
     store.set "darkColorTheme", $("body").hasClass("dark")
+    $input.focus()
 
   $consoleDashboard.find("i.icon-eye, i.icon-eye-off").on "click", ->
     toggleEchoEvalOutput()
+    $input.focus()
 
+  # restore previous state(s)
   if store
+    $input.val(csc.lastPrompt()) if csc.lastPrompt()
     window.echoEvalOutput store.get("echoEvalOutput")
     $iconDark.trigger "click"  if store.get("darkColorTheme")
-  $("#consoleOutput .outputResult").live "click", (e) ->
+
+  $("#consoleOutput .outputResult").live "dblclick", (e) ->
     if $(e.target).hasClass("attribute") or $(e.target).hasClass("value")
       $input.val $(e.target).html()
     else
-
-      #
       $input.val $(this).data("outputString")
     $input.focus()
 
-  $("#consoleOutput .outputResult").live "dblclick", (e) ->
+  $("#consoleOutput .outputResult").live "click", (e) ->
     $input.val $(this).data("code")
     $input.focus()
 
   $("#consoleOutput .outputResult i.icon-cancel").live "click", ->
     $e = $(this).parent()
-
-    # console.log($e.data('position'));
     csc.removeFromOutputHistory $e.data("position")
     $e.remove()
 
